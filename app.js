@@ -78,6 +78,9 @@ var app = express();
 app.get('/wetty/ssh/:user', function(req, res) {
     res.sendfile(__dirname + '/public/wetty/index.html');
 });
+app.get('/wetty/terminal/:host/:user', function(req, res) {
+    res.sendfile(__dirname + '/public/wetty/index.html');
+});
 app.use('/', express.static(path.join(__dirname, 'public')));
 
 if (runhttps) {
@@ -95,26 +98,37 @@ io.on('connection', function(socket){
     var sshuser = '';
     var request = socket.request;
     console.log((new Date()) + ' Connection accepted.');
+    console.log("url=" + request.headers.referer);
     if (match = request.headers.referer.match('/wetty/ssh/.+$')) {
         sshuser = match[0].replace('/wetty/ssh/', '') + '@';
+    } else if (match = request.headers.referer.match('/wetty/terminal/*/.+$')) {
+	console.log(match[0].split('/')[3]);
+	console.log(match[0].split('/')[4]);
+	sshuser=match[0].split('/')[4] + "@";
+	sshhost=match[0].split('/')[3];
+	
+		
     } else if (globalsshuser) {
         sshuser = globalsshuser + '@';
     }
 
-    var term;
+    var term;	
+/*[
     if (process.getuid() == 0) {
+	console.log("process id is zero");
         term = pty.spawn('/bin/login', [], {
             name: 'xterm-256color',
             cols: 80,
             rows: 30
         });
-    } else {
+    } else { */
+	console.log("process id is not zero");
         term = pty.spawn('ssh', [sshuser + sshhost, '-p', sshport, '-o', 'PreferredAuthentications=' + sshauth], {
             name: 'xterm-256color',
             cols: 80,
             rows: 30
         });
-    }
+    /*}*/
     console.log((new Date()) + " PID=" + term.pid + " STARTED on behalf of user=" + sshuser)
     term.on('data', function(data) {
         socket.emit('output', data);
