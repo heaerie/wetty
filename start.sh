@@ -1,1 +1,1 @@
-sudo node app.js -p 3001
+sudo node app.js -p 3001 &
